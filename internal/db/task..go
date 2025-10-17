@@ -2,11 +2,16 @@ package db
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
 	"strings"
 	"time"
 
 	"github.com/Minkaill/planner-service.git/internal/models"
+	"github.com/Minkaill/planner-service.git/pkg/utils"
 )
+
+var ErrTaskNotFound = errors.New("задача не найдена")
 
 func AddTask(db *sql.DB, t *models.Task) (int64, error) {
 	var id int64
@@ -63,6 +68,82 @@ func GetTasks(db *sql.DB, search string) ([]models.Task, error) {
 
 	defer rows.Close()
 	return scanTasks(rows)
+}
+
+func GetTask(db *sql.DB, id string) (*models.Task, error) {
+	var t models.Task
+
+	row := db.QueryRow(`SELECT id, date, title, comment, repeat FROM scheduler WHERE id = :id`, sql.Named("id", id))
+	err := row.Scan(&t.ID, &t.Date, &t.Title, &t.Comment, &t.Repeat)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // если задачи с таким id нет
+		}
+	}
+
+	return &t, nil
+}
+
+func UpdateTask(db *sql.DB, t *models.Task) error {
+	if strings.TrimSpace(t.Title) == "" {
+		return fmt.Errorf("заголовок не может быть пустым")
+	}
+
+	if err := utils.CheckDate(t); err != nil {
+		return err
+	}
+
+	query := `
+		UPDATE scheduler
+		SET date = :date,
+		    title = :title,
+		    comment = :comment,
+		    repeat = :repeat
+		WHERE id = :id
+	`
+
+	res, err := db.Exec(query,
+		sql.Named("date", t.Date),
+		sql.Named("title", t.Title),
+		sql.Named("comment", t.Comment),
+		sql.Named("repeat", t.Repeat),
+		sql.Named("id", t.ID),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return ErrTaskNotFound
+	}
+
+	return nil
+}
+
+func DeleteTask(db *sql.DB, id string) error {
+	query := `DELETE FROM scheduler WHERE id = :id`
+
+	res, err := db.Exec(query, sql.Named("id", id))
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return ErrTaskNotFound
+	}
+
+	return nil
 }
 
 func scanTasks(rows *sql.Rows) ([]models.Task, error) {
