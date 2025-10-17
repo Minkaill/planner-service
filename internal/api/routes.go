@@ -7,5 +7,6 @@ import (
 
 func InitRoutes(r *gin.Engine) {
 	r.GET("/api/nextdate", handlers.NextDateHandler)
+	r.GET("/api/tasks", handlers.GetTasksHandler)
 	r.POST("/api/task", handlers.AddTaskHandler)
 }
