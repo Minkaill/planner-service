@@ -33,7 +33,9 @@ func Run() error {
 
 	api.InitRoutes(r)
 
-	r.Static("/web", "./web")
+	r.Static("/css", "./web/css")
+	r.Static("/js", "./web/js")
+	r.StaticFile("/", "./web/index.html")
 
 	addr := fmt.Sprintf(":%s", port)
 	fmt.Printf("Сервер запущен на http://localhost%s\n", addr)
