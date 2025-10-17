@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Minkaill/planner-service.git/pkg/api"
-	"github.com/Minkaill/planner-service.git/pkg/db"
+	"github.com/Minkaill/planner-service.git/internal/api"
+	"github.com/Minkaill/planner-service.git/internal/db"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
