@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/Minkaill/planner-service.git/pkg/server"
+	"github.com/Minkaill/planner-service.git/internal/server"
 )
 
 func main() {
