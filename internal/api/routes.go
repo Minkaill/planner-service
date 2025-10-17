@@ -11,4 +11,5 @@ func InitRoutes(r *gin.Engine) {
 	r.GET("/api/task", handlers.GetTaskHandler)
 	r.POST("/api/task", handlers.AddTaskHandler)
 	r.PUT("/api/task", handlers.UpdateTaskHandler)
+	r.DELETE("/api/task", handlers.DeleteTaskHandler)
 }

@@ -2,6 +2,7 @@ package db
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -9,6 +10,8 @@ import (
 	"github.com/Minkaill/planner-service.git/internal/models"
 	"github.com/Minkaill/planner-service.git/pkg/utils"
 )
+
+var ErrTaskNotFound = errors.New("задача не найдена")
 
 func AddTask(db *sql.DB, t *models.Task) (int64, error) {
 	var id int64
@@ -117,7 +120,27 @@ func UpdateTask(db *sql.DB, t *models.Task) error {
 	}
 
 	if rows == 0 {
-		return sql.ErrNoRows
+		return ErrTaskNotFound
+	}
+
+	return nil
+}
+
+func DeleteTask(db *sql.DB, id string) error {
+	query := `DELETE FROM scheduler WHERE id = :id`
+
+	res, err := db.Exec(query, sql.Named("id", id))
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return ErrTaskNotFound
 	}
 
 	return nil
