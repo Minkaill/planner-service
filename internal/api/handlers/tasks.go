@@ -10,8 +10,8 @@ import (
 
 func GetTasksHandler(c *gin.Context) {
 	search := c.Query("search")
-	
-	tasks, err := db.GetTasks(db.DB, search)
+
+	tasks, err := db.GetTasks(search)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

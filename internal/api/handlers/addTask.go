@@ -27,7 +27,7 @@ func AddTaskHandler(c *gin.Context) {
 		return
 	}
 
-	id, err := db.AddTask(db.DB, &t)
+	id, err := db.AddTask(&t)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка при добавлении задачи"})
 		return
