@@ -15,7 +15,7 @@ func GetTaskHandler(c *gin.Context) {
 		return
 	}
 
-	task, err := db.GetTask(db.DB, id)
+	task, err := db.GetTask(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

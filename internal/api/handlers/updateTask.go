@@ -21,7 +21,7 @@ func UpdateTaskHandler(c *gin.Context) {
 		return
 	}
 
-	err := db.UpdateTask(db.DB, &t)
+	err := db.UpdateTask(&t)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			c.JSON(http.StatusNotFound, gin.H{"error": "задача не найдена"})

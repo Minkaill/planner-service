@@ -13,11 +13,11 @@ import (
 
 var ErrTaskNotFound = errors.New("задача не найдена")
 
-func AddTask(db *sql.DB, t *models.Task) (int64, error) {
+func AddTask(t *models.Task) (int64, error) {
 	var id int64
 
 	query := `INSERT INTO scheduler (date, title, comment, repeat) VALUES (:date, :title, :comment, :repeat)`
-	res, err := db.Exec(query, sql.Named("date", t.Date), sql.Named("title", t.Title), sql.Named("comment", t.Comment), sql.Named("repeat", t.Repeat))
+	res, err := DB.Exec(query, sql.Named("date", t.Date), sql.Named("title", t.Title), sql.Named("comment", t.Comment), sql.Named("repeat", t.Repeat))
 	if err == nil {
 		id, err = res.LastInsertId()
 	}
@@ -25,14 +25,14 @@ func AddTask(db *sql.DB, t *models.Task) (int64, error) {
 	return id, err
 }
 
-func GetTasks(db *sql.DB, search string) ([]models.Task, error) {
+func GetTasks(search string) ([]models.Task, error) {
 	var (
 		rows *sql.Rows
 		err  error
 	)
 
 	if search == "" {
-		rows, err = db.Query(`SELECT id, date, title, comment, repeat from scheduler`)
+		rows, err = DB.Query(`SELECT id, date, title, comment, repeat from scheduler`)
 		if err != nil {
 			return nil, err
 		}
@@ -43,7 +43,7 @@ func GetTasks(db *sql.DB, search string) ([]models.Task, error) {
 
 	if t, parseErr := time.Parse("02.01.2006", search); parseErr == nil {
 		search = t.Format("20060102")
-		rows, err = db.Query(`
+		rows, err = DB.Query(`
 			SELECT id, date, title, comment, repeat
 			FROM scheduler
 			WHERE date = :date
@@ -56,7 +56,7 @@ func GetTasks(db *sql.DB, search string) ([]models.Task, error) {
 	}
 
 	search = strings.TrimSpace(search)
-	rows, err = db.Query(`
+	rows, err = DB.Query(`
 		SELECT id, date, title, comment, repeat
 		FROM scheduler
 		WHERE title LIKE '%' || :search || '%' COLLATE NOCASE
@@ -70,10 +70,10 @@ func GetTasks(db *sql.DB, search string) ([]models.Task, error) {
 	return scanTasks(rows)
 }
 
-func GetTask(db *sql.DB, id string) (*models.Task, error) {
+func GetTask(id string) (*models.Task, error) {
 	var t models.Task
 
-	row := db.QueryRow(`SELECT id, date, title, comment, repeat FROM scheduler WHERE id = :id`, sql.Named("id", id))
+	row := DB.QueryRow(`SELECT id, date, title, comment, repeat FROM scheduler WHERE id = :id`, sql.Named("id", id))
 	err := row.Scan(&t.ID, &t.Date, &t.Title, &t.Comment, &t.Repeat)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -84,7 +84,7 @@ func GetTask(db *sql.DB, id string) (*models.Task, error) {
 	return &t, nil
 }
 
-func UpdateTask(db *sql.DB, t *models.Task) error {
+func UpdateTask(t *models.Task) error {
 	if strings.TrimSpace(t.Title) == "" {
 		return fmt.Errorf("заголовок не может быть пустым")
 	}
@@ -102,7 +102,7 @@ func UpdateTask(db *sql.DB, t *models.Task) error {
 		WHERE id = :id
 	`
 
-	res, err := db.Exec(query,
+	res, err := DB.Exec(query,
 		sql.Named("date", t.Date),
 		sql.Named("title", t.Title),
 		sql.Named("comment", t.Comment),
@@ -126,10 +126,10 @@ func UpdateTask(db *sql.DB, t *models.Task) error {
 	return nil
 }
 
-func DeleteTask(db *sql.DB, id string) error {
+func DeleteTask(id string) error {
 	query := `DELETE FROM scheduler WHERE id = :id`
 
-	res, err := db.Exec(query, sql.Named("id", id))
+	res, err := DB.Exec(query, sql.Named("id", id))
 	if err != nil {
 		return err
 	}
@@ -163,4 +163,48 @@ func scanTasks(rows *sql.Rows) ([]models.Task, error) {
 	}
 
 	return tasks, nil
+}
+
+func UpdateDate(next string, id string) error {
+	query := `UPDATE scheduler SET date = :date WHERE id = :id`
+
+	res, err := DB.Exec(query, sql.Named("date", next), sql.Named("id", id))
+	if err != nil {
+		return err
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rows == 0 {
+		return ErrTaskNotFound
+	}
+
+	return nil
+}
+
+func TaskDone(id string) error {
+	task, err := GetTask(id)
+	if err != nil {
+		return err
+	}
+
+	if task.Repeat == "" {
+		DeleteTask(id)
+		return nil
+	}
+
+	now := time.Now()
+	next, err := utils.NextDate(now, task.Date, task.Repeat)
+	if err != nil {
+		return err
+	}
+
+	if err := UpdateDate(next, id); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -35,6 +35,12 @@ func Run() error {
 
 	r.Static("/css", "./web/css")
 	r.Static("/js", "./web/js")
+	r.Static("/web", "./web")
+
+	r.StaticFile("/favicon.ico", "./web/favicon.ico")
+	r.StaticFile("/index.html", "./web/index.html")
+	r.StaticFile("/login.html", "./web/login.html")
+
 	r.StaticFile("/", "./web/index.html")
 
 	addr := fmt.Sprintf(":%s", port)
