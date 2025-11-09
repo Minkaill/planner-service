@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 
@@ -29,6 +30,7 @@ func SignInHandler(c *gin.Context) {
 
 	if req.Password != expected {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверный пароль"})
+		fmt.Println("Упс!, Неверный пароль! Повторите попытку возже!")
 		return
 	}
 
