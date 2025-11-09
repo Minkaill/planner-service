@@ -12,6 +12,8 @@ type SignInRequest struct {
 	Password string `json:"password"`
 }
 
+// Тестовый коммит для проверки
+
 func SignInHandler(c *gin.Context) {
 	var req SignInRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
