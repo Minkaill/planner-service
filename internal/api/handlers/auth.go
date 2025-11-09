@@ -12,7 +12,7 @@ type SignInRequest struct {
 	Password string `json:"password"`
 }
 
-// Тестовый коммит для проверки
+// Тестовый коммит для проверки 2
 
 func SignInHandler(c *gin.Context) {
 	var req SignInRequest
